@@ -47,7 +47,7 @@ parse_input(std::string_view input) {
     return {};
   }
 
-  std::vector<std::string> args = utils::split(input, " ");
+  std::vector<std::string> args = utils::split_by_space(input);
   args[0] = filepath.string();
   auto ret_args = new char *[args.size() + 1];
   for (size_t i = 0; i < args.size(); i++) {
