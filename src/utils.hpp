@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace utils {
@@ -43,6 +44,20 @@ inline std::vector<std::string> split_by_space(const std::string_view &s) {
   return res;
 }
 
+inline constexpr bool start_with(const std::string_view &s,
+                                 const std::string_view &pattern) {
+  return s.rfind(pattern, 0) == 0;
+}
+
+bool replace(std::string &str, const std::string_view &from,
+             const std::string_view &to) {
+  auto start_pos = str.find(from);
+  if (start_pos == std::string::npos)
+    return false;
+  str.replace(start_pos, from.length(), to);
+  return true;
+}
+
 inline void set_value(char *strs[], const char *key, const char *new_value) {
   while (*strs != nullptr) {
     if (std::strcmp(*strs, key)) {
@@ -62,7 +77,7 @@ inline std::string format_path(const std::string_view &path) {
         stk.pop();
       continue;
     }
-    if (!token.empty())
+    if (!token.empty() && token != ".")
       stk.emplace(token);
   }
   std::vector<std::string> format_tokens;

@@ -8,4 +8,4 @@ clean:
 	rm -r build
 
 run: build
-	./build/bin/shell
+	./build/bin/cybershell

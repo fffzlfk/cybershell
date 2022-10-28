@@ -18,11 +18,11 @@
 namespace fs = std::filesystem;
 using namespace fs;
 
-inline std::optional<fs::path> find_file_in_env(const fs::path &filepath) {
+inline std::optional<fs::path> find_file_in_path(const fs::path &filepath) {
   auto paths = utils::split(std::getenv("PATH"), ":");
   for (const auto &path : paths) {
     auto new_filepath = fs::path(path) / filepath;
-    if (fs::is_regular_file(new_filepath)) {
+    if (fs::exists(new_filepath)) {
       return new_filepath;
     }
   }
@@ -53,10 +53,12 @@ inline bool solve_cd(const std::string_view &input, char *envp[]) {
   auto args = utils::split_by_space(input);
   if (args[0] == "cd") {
     if (args.size() == 2) {
-      if (args[1] == "~")
-        args[1] = std::getenv("HOME");
-      else if (args[1] == "-")
+      if (args[1] == "-") {
         args[1] = std::getenv("OLDPWD");
+      } else if (utils::start_with(args[1], "~")) {
+        args[1].replace(args[1].begin(), args[1].begin() + 1,
+                        std::string{std::getenv("HOME")});
+      }
       cd(args[1], envp);
     } else
       std::cout << "cd can only take one argument.\n";
@@ -69,13 +71,31 @@ inline std::optional<std::tuple<const char *, char **const, size_t>>
 parse_input(std::string_view input) {
   auto it = input.find(' ');
   auto filepath = fs::path(input.substr(0, it));
-  if (!fs::is_regular_file(filepath)) {
-    auto new_filepath = find_file_in_env(filepath);
-    if (!new_filepath.has_value()) {
+  // absolute path
+  if (filepath.is_absolute()) {
+    if (!fs::exists(filepath)) {
       std::cout << filepath << " is not exists or not a file.\n";
       return {};
     }
-    filepath = new_filepath.value();
+  } else if (filepath.is_relative()) {
+    // find in PATH
+    if (filepath.filename() == filepath.string()) {
+      auto filepath_in_path = find_file_in_path(filepath);
+      if (!filepath_in_path.has_value()) {
+        std::cout << filepath << " is not exists or not a file.\n";
+        return {};
+      }
+      filepath = filepath_in_path.value();
+    } else {
+      // relative path
+      auto absolute_path =
+          utils::format_path((fs::path(std::getenv("PWD")) / filepath).c_str());
+      if (!fs::exists(absolute_path)) {
+        std::cout << absolute_path << " is not exists or not a file.\n";
+        return {};
+      }
+      filepath = absolute_path;
+    }
   }
 
   if ((fs::status(filepath).permissions() & fs::perms::owner_exec) ==
@@ -97,14 +117,22 @@ parse_input(std::string_view input) {
   return std::make_tuple(ret_filepath, ret_args, args.size());
 }
 
-inline constexpr bool is_quit_command(const std::string_view &input) {
+inline constexpr void solve_quit_command(const std::string_view &input) {
   constexpr std::array<const char *, 4> QUIT_COMMANDS = {"\\q", "q", "quit",
                                                          "exit"};
   for (const auto qc : QUIT_COMMANDS) {
     if (input == qc)
-      return true;
+      exit(0);
   }
-  return false;
+}
+
+inline void print_prompt() {
+  auto pwd = utils::format_path(std::getenv("PWD"));
+  auto home = std::getenv("HOME");
+  if (utils::start_with(pwd, home)) {
+    utils::replace(pwd, home, "~");
+  }
+  std::cout << pwd << "> ";
 }
 
 int main(int __argc, char *__argv[], char *envp[]) {
@@ -113,15 +141,16 @@ int main(int __argc, char *__argv[], char *envp[]) {
     (void)__argv;
   }
   while (true) {
-    auto pwd = utils::format_path(std::getenv("PWD"));
-    std::cout << pwd << "> ";
+    print_prompt();
     std::string input{};
     std::getline(std::cin, input);
     input = utils::strip(input);
+
     if (input.empty())
       continue;
-    if (is_quit_command(input))
-      exit(0);
+
+    solve_quit_command(input);
+
     if (solve_cd(input, envp))
       continue;
 
