@@ -1,6 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <cstring>
+#include <numeric>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -37,5 +41,42 @@ inline std::vector<std::string> split_by_space(const std::string_view &s) {
     res.emplace_back(token);
   }
   return res;
+}
+
+inline void set_value(char *strs[], const char *key, const char *new_value) {
+  while (*strs != nullptr) {
+    if (std::strcmp(*strs, key)) {
+      std::strcpy(*strs, new_value);
+      break;
+    }
+    strs++;
+  }
+}
+
+inline std::string format_path(const std::string_view &path) {
+  auto tokens = split(path, "/");
+  std::stack<std::string> stk;
+  for (const auto &token : tokens) {
+    if (token == "..") {
+      if (!stk.empty())
+        stk.pop();
+      continue;
+    }
+    if (!token.empty())
+      stk.emplace(token);
+  }
+  std::vector<std::string> format_tokens;
+  while (!stk.empty()) {
+    format_tokens.emplace_back(stk.top());
+    stk.pop();
+  }
+  std::reverse(format_tokens.begin(), format_tokens.end());
+  if (format_tokens.empty())
+    return "/";
+  return std::accumulate(
+      format_tokens.begin(), format_tokens.end(), std::string{},
+      [](const std::string &a, const std::string &b) -> std::string {
+        return a + "/" + b;
+      });
 }
 } // namespace utils
