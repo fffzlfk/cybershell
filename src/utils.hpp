@@ -1,3 +1,6 @@
+//
+// Created by fffzlfk on 22-10-27.
+//
 #pragma once
 
 #include <algorithm>
@@ -10,6 +13,7 @@
 #include <vector>
 
 namespace utils {
+// 去除字符串首尾空格
 inline std::string strip(const std::string_view &inpt) {
   auto start_it = inpt.begin();
   auto end_it = inpt.rbegin();
@@ -44,13 +48,15 @@ inline std::vector<std::string> split_by_space(const std::string_view &s) {
   return res;
 }
 
+// 判断字符串是否以`pattern`起始
 inline constexpr bool start_with(const std::string_view &s,
                                  const std::string_view &pattern) {
   return s.rfind(pattern, 0) == 0;
 }
 
-bool replace(std::string &str, const std::string_view &from,
-             const std::string_view &to) {
+// 替换字符串
+inline bool replace(std::string &str, const std::string_view &from,
+                    const std::string_view &to) {
   auto start_pos = str.find(from);
   if (start_pos == std::string::npos)
     return false;
@@ -68,6 +74,7 @@ inline void set_value(char *strs[], const char *key, const char *new_value) {
   }
 }
 
+// 格式化文件路径，去除`..`和`.`
 inline std::string format_path(const std::string_view &path) {
   auto tokens = split(path, "/");
   std::stack<std::string> stk;
