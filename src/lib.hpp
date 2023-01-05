@@ -148,4 +148,4 @@ inline void print_prompt() {
   }
   std::cout << pwd << "> ";
 }
-}; // namespace cybershell
+} // namespace cybershell
