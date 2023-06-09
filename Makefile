@@ -2,10 +2,10 @@ build: configure
 	cmake --build build
 
 configure:
-	cmake -B build
+	cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
 
 clean:
-	rm -r build
+	rm -rf build
 
 run: build
 	./build/bin/cybershell
