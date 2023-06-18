@@ -2,7 +2,7 @@ build: configure
 	cmake --build build
 
 configure:
-	cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
+	cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
 clean:
 	rm -rf build
